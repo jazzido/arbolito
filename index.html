@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+  <head>
+    <title>arbolito - cotización del dólar y euro en argentina</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="/css/style.css" type="text/css" media="screen, projection" />
+    <script src="http://www.google.com/jsapi" type="application/javascript"></script>
+    <script type="application/javascript">
+      google.load("visualization", "1", {packages:["linechart"]});
+      google.load('jquery', '1.2.6');
+    </script>
+    <script type="application/javascript">
+
+      var chart;
+
+
+      var doQuery = function(item) {
+        //var query = new google.visualization.Query('http://{{ HOST }}/vizdata?ti=' + item);
+      var query = new google.visualization.Query('/vizdata?ti=' + item);
+        query.send(handleQueryResponse);
+      };
+
+      var handleQueryResponse = function(response) {
+        var data = response.getDataTable();
+        var formatter = new google.visualization.DateFormat({pattern: 'd-MM-yy'});
+        formatter.format(data, 0);
+        chart.draw(data, {width: 350, height: 240, legend: 'none'});
+      };
+
+      $(document).ready(function() {
+      
+        chart = new google.visualization.LineChart($('tbody#chart_container tr td')[0]);
+
+
+        $('table tbody td').click(function(e) {
+          $('table tbody td').each(function(i, t) { $(t).removeClass('selected'); });
+          $(e.target).addClass('selected');
+          doQuery($(e.target).attr('id'));
+        });
+
+      });
+      
+
+    </script>
+  </head>
+  <body>
+    <div id="container">
+      <h1>arbolito</h1>
+      <table>
+	<caption>Cotizaciones según sitio web del <a href="http://www.bna.com.ar/bp/bp_cotizaciones.asp?op=m">Banco de la Nación Argentina</a>. Datos tomados el {{USD.compra.timestamp|date:"d/m/Y"}}</caption>
+	<thead>
+	  <tr>
+	    <th></th>
+	    <th scope="col">Compra</th>
+	    <th scope="col">Venta</th>
+	  </tr>
+	</thead>
+	<tbody id="cotizaciones">
+	  <tr>
+	    <th scope="row">USD</th>
+	    <td id="USD-compra">{{ USD.compra.value|floatformat:2 }}</td>
+	    <td id="USD-venta">{{ USD.venta.value|floatformat:2 }}</td>
+	  </tr>
+	  <tr>
+	    <th scope="row">EUR</th>
+	    <td id="EUR-compra">{{ EUR.compra.value|floatformat:2 }}</td>
+	    <td id="EUR-venta">{{ EUR.venta.value|floatformat:2 }}</td>
+	  </tr>
+	</tbody>
+	<tbody id="chart_container">
+	  <tr>
+	    <td colspan="3"></td>
+	  </tr>
+	</tbody>
+      </table>
+      <p id="about_arbolito"><span class="arbolito">arbolito</span> es una creación de <a href="http://jazzido.com">Manuel Aristarán</a></p>
+    </div>
+  </body>
+</html>

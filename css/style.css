@@ -1,0 +1,93 @@
+/* reset.css */
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, code, del, dfn, em, img, q, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {margin:0;padding:0;border:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
+body {line-height:1.5;}
+table {border-collapse:separate;border-spacing:0;}
+
+caption, th, td {text-align:left;font-weight:normal;}
+table, td, th {vertical-align:middle;}
+blockquote:before, blockquote:after, q:before, q:after {content:"";}
+blockquote, q {quotes:"" "";}
+a img {border:none;}
+
+a {
+	color: inherit;
+}
+
+/* layout */
+
+body {
+	font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+div#container {
+    width: 350px;
+    margin: 0 auto;
+}
+
+h1 {
+	color: #000;
+	background: url(../img/arbolito.jpg) no-repeat left 17px;
+	padding-left: 70px;
+	padding-top: 7px;
+	margin: 0 auto;
+	font-size: 80px;
+	width: 100%;
+}
+
+
+table {
+	width: 100%;
+	caption-side: bottom;
+}
+
+table caption {
+	font-size: 13px;
+	font-style: italic;
+	color: black;
+}
+
+thead th {
+	border-bottom: 1px double #000;
+}
+
+th {
+	font-weight:  bold;
+}
+
+table thead th {
+	font-size: 20px;
+}
+
+table tbody th {
+	font-size: 30px;
+}
+
+table tbody tr:hover {
+	background-color: #f5f5f5;
+	cursor: pointer;
+}
+
+table tbody td {
+	font-size: 30px;
+}
+
+table tbody td.selected {
+    color: #c63310;
+}
+
+p#about_arbolito {
+    margin-top: 30px;
+    opacity: 0.5;
+}
+
+span.arbolito {
+	padding-left: 15px;
+	background: url(../img/arbolito_icon.png) no-repeat 0 -1px;
+	font-weight: bold;
+}
+
+
+div#chart_div {
+    margin:0; padding: 0;
+    
+}
