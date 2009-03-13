@@ -25,8 +25,9 @@ from google.appengine.ext.webapp import template
 import gviz_api
 from datetime import datetime
 from dateutil import parser as date_parser
+from string import join
 
-import os
+import os, logging
 
 class TrackedValue(db.Model):
   timestamp = db.DateTimeProperty(auto_now_add=True)
@@ -55,20 +56,43 @@ class MainHandler(webapp.RequestHandler):
 
 
 class VizHandler(webapp.RequestHandler):
+
+  data_table = None
+
   def get(self):
-    description = {"tracked_item": ("string", "Item"),
-                   "value": ("number", "Cotizacion"),
-                   "timestamp": ("datetime", "Fecha")}
+    
+    data_table_description = {"timestamp": ("datetime", "Fecha")}
 
-    data_table = gviz_api.DataTable(description)
+    columns = self.request.get('ti').split(',')
+    for c in columns: data_table_description[c] = ("number", c)
 
-    data_table.LoadData(dict(zip(description.keys(), [getattr(i, k) for k in description.keys()]))  
-                        for i in db.GqlQuery('SELECT * from TrackedValue %s' % ("WHERE tracked_item = '%s'" % self.request.get('ti') 
-                                                                                if self.request.get('ti') else '')))
+    data_table = gviz_api.DataTable(data_table_description)
 
-    resp = data_table.ToResponse(('timestamp', 'tracked_item', 'value'), 'timestamp', self.request.get('tqx'))
+    data_table.LoadData([i for i in self._mergeData(db.GqlQuery('SELECT * from TrackedValue %s ORDER BY timestamp' % ("WHERE tracked_item IN ('%s')" % 
+                                                                                                                      join(self.request.get('ti').split(','),
+                                                                                                                           "','")
+                                                                                                                      if self.request.get('ti') else '')))])
+    resp = data_table.ToResponse(['timestamp'] + columns, (), self.request.get('tqx'))
     self.response.out.write(resp)
-  
+
+
+  def _mergeData(self, data):
+    rv = []
+    acc = {}
+    prev_t = None
+    for i in data:
+      if prev_t is not None and datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day) != prev_t:
+        rv.append(acc)
+        acc = {}
+      acc['timestamp'] = datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day)
+      acc[i.tracked_item] = i.value
+      prev_t = datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day)
+
+#      logging.debug(acc)
+
+    logging.debug(rv)
+    return rv
+    
 
 class TrackHandler(webapp.RequestHandler):
   def post(self):
@@ -105,6 +129,7 @@ def main():
                                         ('/track', TrackHandler),
                                         ('/vizdata', VizHandler)],
                                        debug=True)
+  logging.getLogger().setLevel(logging.DEBUG)
   wsgiref.handlers.CGIHandler().run(application)
 
 

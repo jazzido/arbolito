@@ -7,38 +7,75 @@
     <script src="http://www.google.com/jsapi" type="application/javascript"></script>
     <script type="application/javascript">
       google.load("visualization", "1", {packages:["linechart"]});
-      google.load('jquery', '1.2.6');
+      google.load('jquery', '1.3.2');
     </script>
     <script type="application/javascript">
 
       var chart;
+      var colors = ["#0c8e40", "#0f5c7d", "#c67010", "#c63310"];
+      var usedColors = [];
+      var loading = false;
 
+      // Array Remove - By John Resig (MIT Licensed)
+      Array.prototype.remove = function(from, to) {
+        var rest = this.slice((to || from) + 1 || this.length);
+        this.length = from < 0 ? this.length + from : from;
+	return this.push.apply(this, rest);
+      };
 
-      var doQuery = function(item) {
-        //var query = new google.visualization.Query('http://{{ HOST }}/vizdata?ti=' + item);
-      var query = new google.visualization.Query('/vizdata?ti=' + item);
+      var colorToHex = function(rgbString) {
+        var parts = rgbString.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        delete (parts[0]);
+        for (var i = 1; i <= 3; ++i) {
+	  parts[i] = parseInt(parts[i]).toString(16);
+	  if (parts[i].length == 1) parts[i] = '0' + parts[i];
+        }
+        return '#' + parts.join('');
+      };
+
+      var doQuery = function(items) {
+        var query = new google.visualization.Query('/vizdata?ti=' + items);
         query.send(handleQueryResponse);
+        loading = true;
       };
 
       var handleQueryResponse = function(response) {
         var data = response.getDataTable();
         var formatter = new google.visualization.DateFormat({pattern: 'd-MM-yy'});
         formatter.format(data, 0);
-        chart.draw(data, {width: 350, height: 240, legend: 'none'});
+        chart.draw(data, {width: 350, height: 240, legend: 'none', colors: usedColors});
+        loading = false;
       };
 
       $(document).ready(function() {
+       chart = new google.visualization.LineChart($('tbody#chart_container tr td')[0]);
+       $('table tbody td').click(function(e) { selectCell(e.target); });
+
+       var selectCell = function(cell) {
+         //if (loading) return;
+         if((td = $(cell)).hasClass('selected')) {
+           var ci = jQuery.inArray(colorToHex(td.css('color')), usedColors);
+           colors.push(usedColors[ci]);
+           usedColors.remove(ci);
+
+           td.removeClass('selected');
+           td.css('color', '');
+        }
+        else {
+          td.addClass('selected');
+          td.css('color', usedColors[usedColors.push(colors.pop())-1]);
+        }
+        var selected = $('.selected');
+
+        if (selected.length == 0) $('tbody#chart_container').hide();
+        else $('tbody#chart_container').show();
+
+        doQuery(selected.map(function() { return $(this).attr('id'); }).get().join(','));
+      };
       
-        chart = new google.visualization.LineChart($('tbody#chart_container tr td')[0]);
-
-
-        $('table tbody td').click(function(e) {
-          $('table tbody td').each(function(i, t) { $(t).removeClass('selected'); });
-          $(e.target).addClass('selected');
-          doQuery($(e.target).attr('id'));
-        });
-
-      });
+      selectCell($('#USD-venta')[0]);
+      selectCell($('#EUR-venta')[0]);
+     });
       
 
     </script>
@@ -47,7 +84,7 @@
     <div id="container">
       <h1>arbolito</h1>
       <table>
-	<caption>Cotizaciones según sitio web del <a href="http://www.bna.com.ar/bp/bp_cotizaciones.asp?op=m">Banco de la Nación Argentina</a>. Datos tomados el {{USD.compra.timestamp|date:"d/m/Y"}}</caption>
+	<caption>Cotizaciones según sitio web del <a href="http://www.bna.com.ar/bp/bp_cotizaciones.asp?op=m">Banco de la Nación Argentina</a> el <strong>{{USD.compra.timestamp|date:"d/m/Y"}}</strong>. Valores históricos: click sobre la tabla.</caption>
 	<thead>
 	  <tr>
 	    <th></th>
@@ -73,7 +110,16 @@
 	  </tr>
 	</tbody>
       </table>
-      <p id="about_arbolito"><span class="arbolito">arbolito</span> es una creación de <a href="http://jazzido.com">Manuel Aristarán</a></p>
+      <p id="about_arbolito"><span class="arbolito">arbolito</span> es una creación de <a href="http://jazzido.com">Manuel Aristarán</a>. <small><a href="http://github.com/jazzido/arbolito/tree/master">Acá está el código fuente</a>, si tanto te interesa.</small></p>
     </div>
+    <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-68057-14");
+pageTracker._trackPageview();
+} catch(err) {}</script>
   </body>
 </html>

@@ -72,12 +72,16 @@ table tbody td {
 }
 
 table tbody td.selected {
-    color: #c63310;
+    /* color: #c63310; */
 }
 
 p#about_arbolito {
     margin-top: 30px;
     opacity: 0.5;
+}
+
+small {
+    font-size: 10px;
 }
 
 span.arbolito {
