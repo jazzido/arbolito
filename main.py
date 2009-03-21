@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-
 import wsgiref.handlers
 
 from google.appengine.ext import webapp
@@ -29,6 +28,28 @@ from string import join
 
 import os, logging
 
+
+
+def _mergeData(data):
+  rv = []
+  acc = {}
+  prev_t = None
+  for i in data:
+    d = datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day)
+    if prev_t is not None and d != prev_t:
+      rv.append(acc)
+      acc = {}
+    if acc.get('timestamp') is None:
+      acc['timestamp'] = d
+    acc[i.tracked_item] = i.value
+    prev_t = d
+
+  rv.append(acc)
+
+
+  return rv
+
+
 class TrackedValue(db.Model):
   timestamp = db.DateTimeProperty(auto_now_add=True)
   tracked_item = db.StringProperty(multiline=False)
@@ -39,15 +60,18 @@ class MainHandler(webapp.RequestHandler):
 
     query_template = "SELECT * from TrackedValue WHERE tracked_item = '%s' ORDER BY timestamp DESC LIMIT 1"
 
+    today_rates = _mergeData(db.GqlQuery("SELECT * FROM TrackedValue WHERE tracked_item IN ('EUR-venta', 'EUR-compra', 'USD-venta', 'USD-compra') ORDER BY timestamp DESC LIMIT 4"))[0]
+
     template_values = {
       'USD': { 
-        'compra': db.GqlQuery(query_template % 'USD-compra')[0],
-        'venta': db.GqlQuery(query_template % 'USD-venta')[0]
+        'compra': today_rates[u'USD-compra'],
+        'venta': today_rates[u'USD-venta'],
       },
       'EUR': {
-        'compra': db.GqlQuery(query_template % 'EUR-compra')[0],
-        'venta': db.GqlQuery(query_template % 'EUR-venta')[0]
+        'compra': today_rates[u'EUR-compra'],
+        'venta': today_rates[u'EUR-venta']
       },
+      'FECHA': today_rates[u'timestamp'],
       'HOST': self.request.environ['SERVER_NAME'] + (':' + self.request.environ['SERVER_PORT'] if self.request.environ['SERVER_PORT'] else '')
     }
 
@@ -68,30 +92,12 @@ class VizHandler(webapp.RequestHandler):
 
     data_table = gviz_api.DataTable(data_table_description)
 
-    data_table.LoadData([i for i in self._mergeData(db.GqlQuery('SELECT * from TrackedValue %s ORDER BY timestamp' % ("WHERE tracked_item IN ('%s')" % 
-                                                                                                                      join(self.request.get('ti').split(','),
-                                                                                                                           "','")
-                                                                                                                      if self.request.get('ti') else '')))])
+    data_table.LoadData(_mergeData(db.GqlQuery('SELECT * from TrackedValue %s ORDER BY timestamp' % ("WHERE tracked_item IN ('%s')" % 
+                                                                                                     join(self.request.get('ti').split(','),
+                                                                                                          "','")
+                                                                                                     if self.request.get('ti') else ''))))
     resp = data_table.ToResponse(['timestamp'] + columns, (), self.request.get('tqx'))
     self.response.out.write(resp)
-
-
-  def _mergeData(self, data):
-    rv = []
-    acc = {}
-    prev_t = None
-    for i in data:
-      if prev_t is not None and datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day) != prev_t:
-        rv.append(acc)
-        acc = {}
-      acc['timestamp'] = datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day)
-      acc[i.tracked_item] = i.value
-      prev_t = datetime(i.timestamp.year, i.timestamp.month, i.timestamp.day)
-
-#      logging.debug(acc)
-
-    logging.debug(rv)
-    return rv
     
 
 class TrackHandler(webapp.RequestHandler):

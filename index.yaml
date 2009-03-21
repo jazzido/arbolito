@@ -10,13 +10,13 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-# Used 365 times in query history.
+# Unused in query history -- copied from input.
 - kind: TrackedValue
   properties:
   - name: tracked_item
   - name: timestamp
 
-# Used 257 times in query history.
+# Used 4 times in query history.
 - kind: TrackedValue
   properties:
   - name: tracked_item

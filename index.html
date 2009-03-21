@@ -12,9 +12,10 @@
     <script type="application/javascript">
 
       var chart;
-      var colors = ["#0c8e40", "#0f5c7d", "#c67010", "#c63310"];
+      var colors = ["#0c8e40", "#c67010", "#0f5c7d", "#c63310"];
       var usedColors = [];
       var loading = false;
+      var selectedCells = [];
 
       // Array Remove - By John Resig (MIT Licensed)
       Array.prototype.remove = function(from, to) {
@@ -57,24 +58,23 @@
            var ci = jQuery.inArray(colorToHex(td.css('color')), usedColors);
            colors.push(usedColors[ci]);
            usedColors.remove(ci);
-
+           selectedCells.remove(jQuery.inArray(td.attr('id'), selectedCells));
            td.removeClass('selected');
            td.css('color', '');
         }
         else {
           td.addClass('selected');
           td.css('color', usedColors[usedColors.push(colors.pop())-1]);
+          selectedCells.push(td.attr('id'));
         }
-        var selected = $('.selected');
 
-        if (selected.length == 0) $('tbody#chart_container').hide();
+        if (selectedCells.length == 0) $('tbody#chart_container').hide();
         else $('tbody#chart_container').show();
 
-        doQuery(selected.map(function() { return $(this).attr('id'); }).get().join(','));
+        doQuery(selectedCells.join(','));
       };
       
       selectCell($('#USD-venta')[0]);
-      selectCell($('#EUR-venta')[0]);
      });
       
 
@@ -84,7 +84,7 @@
     <div id="container">
       <h1>arbolito</h1>
       <table>
-	<caption>Cotizaciones según sitio web del <a href="http://www.bna.com.ar/bp/bp_cotizaciones.asp?op=m">Banco de la Nación Argentina</a> el <strong>{{USD.compra.timestamp|date:"d/m/Y"}}</strong>. Valores históricos: click sobre la tabla.</caption>
+	<caption>Cotizaciones según sitio web del <a href="http://www.bna.com.ar/bp/bp_cotizaciones.asp?op=m">Banco de la Nación Argentina</a> el <strong>{{FECHA|date:"d/m/Y"}}</strong>. Valores históricos: click sobre la tabla.</caption>
 	<thead>
 	  <tr>
 	    <th></th>
@@ -95,13 +95,13 @@
 	<tbody id="cotizaciones">
 	  <tr>
 	    <th scope="row">USD</th>
-	    <td id="USD-compra">{{ USD.compra.value|floatformat:2 }}</td>
-	    <td id="USD-venta">{{ USD.venta.value|floatformat:2 }}</td>
+	    <td id="USD-compra">{{ USD.compra|floatformat:2 }}</td>
+	    <td id="USD-venta">{{ USD.venta|floatformat:2 }}</td>
 	  </tr>
 	  <tr>
 	    <th scope="row">EUR</th>
-	    <td id="EUR-compra">{{ EUR.compra.value|floatformat:2 }}</td>
-	    <td id="EUR-venta">{{ EUR.venta.value|floatformat:2 }}</td>
+	    <td id="EUR-compra">{{ EUR.compra|floatformat:2 }}</td>
+	    <td id="EUR-venta">{{ EUR.venta|floatformat:2 }}</td>
 	  </tr>
 	</tbody>
 	<tbody id="chart_container">
